@@ -14,10 +14,14 @@
         *{box-sizing:border-box; font-family: 'Segoe UI', sans-serif;}
         body{margin:0;background:var(--bg-main);color:var(--text); padding-bottom: 50px;}
         
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg-main); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: var(--bg-panel); padding: 30px; border-radius: 12px; border: 1px solid var(--border); width: 100%; max-width: 350px; text-align: center; }
+        .login-box img { width: 150px; margin-bottom: 20px; }
+
         .header { padding: 15px 40px; border-bottom: 1px solid var(--border); display: flex; align-items: center; background: var(--bg-panel); position: sticky; top: 0; z-index: 100; gap: 20px; }
         .logo-empresa { height: 50px; width: auto; border-radius: 4px; }
         
-        .container{max-width:1200px;margin:20px auto;padding:0 20px}
+        .container{max-width:1200px;margin:20px auto;padding:0 20px; display: none;}
 
         .dash-horas { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .card-hora { background: var(--bg-panel); padding: 15px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
@@ -25,107 +29,138 @@
         .card-hora small { color: var(--muted); text-transform: uppercase; font-size: 0.65rem; font-weight: bold;}
 
         .main-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
-        .panel { background: var(--bg-panel); padding: 20px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden;}
-        
-        label { display: block; color: var(--muted); font-size: 0.75rem; margin-top: 10px; font-weight: bold; text-transform: uppercase;}
-        
-        input, select { width: 100%; padding: 10px; background: #020214; color: #fff; border: 1px solid var(--border); border-radius: 4px; margin-top: 5px; font-size: 0.9rem; display: block; }
-        
-        button { padding: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; }
-        .btn-blue { background: var(--blue); width: 100%; margin-top: 15px; }
-        .btn-orange { background: var(--pending); width: 100%; margin-top: 15px; text-transform: uppercase; }
+        @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
 
-        .escala-grid { display: flex; gap: 10px; width: 100%; margin-top: 5px; }
-        .escala-item { flex: 1; min-width: 0; }
+        .panel { background: var(--bg-panel); padding: 20px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; }
+        
+        label { display: block; color: var(--muted); font-size: 0.75rem; margin-top: 15px; font-weight: bold; text-transform: uppercase;}
+        
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            background: #020214; 
+            color: #fff; 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            margin-top: 5px; 
+            font-size: 0.9rem; 
+            display: block;
+            outline: none;
+        }
+
+        /* CORREÇÃO DO ENQUADRAMENTO DAS DATAS */
+        .group-dates { 
+            display: flex; 
+            gap: 12px; 
+            width: 100%;
+        }
+        .date-item { 
+            flex: 1; 
+            min-width: 0; /* Previne que o input force a quebra do flex */
+        }
+        
+        /* Ajuste para telas pequenas (Mobile) */
+        @media (max-width: 400px) {
+            .group-dates { flex-direction: column; gap: 0; }
+        }
+
+        button { padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; }
+        .btn-blue { background: var(--blue); width: 100%; margin-top: 15px; }
+        .btn-orange { background: var(--pending); width: 100%; margin-top: 15px; text-transform: uppercase; letter-spacing: 1px;}
+        .btn-logout { background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 5px 10px; font-size: 0.7rem; margin-left: auto;}
 
         .tabs { display: flex; gap: 5px; margin-bottom: 15px; background: #020214; padding: 5px; border-radius: 8px; }
         .tab { flex: 1; padding: 10px; color: var(--muted); background: transparent; border-radius: 5px; cursor: pointer; border: none;}
         .tab.active { background: var(--blue); color: #fff; }
 
         .card { background: #0b0b2e; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; border-left: 4px solid var(--blue);}
-        .card-escala { border-left-color: var(--warning); font-size: 0.85rem; padding: 10px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px;}
+        .card-escala { border-left-color: var(--warning); font-size: 0.85rem; padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;}
         
-        .btn-del { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 0.7rem; border-radius: 4px;}
+        .btn-del { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 5px 10px; font-size: 0.7rem; border-radius: 4px;}
         .btn-card { padding: 8px 12px; font-size: 0.8rem; margin-right: 5px; margin-top: 10px; }
+
+        .section-title { border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; color: var(--warning); font-size: 0.95rem; font-weight: bold; display: flex; align-items: center; gap: 8px;}
     </style>
 </head>
 <body>
 
-<div class="header">
-    <img src="https://raw.githubusercontent.com/cardozooscar/imagenscgr/refs/heads/main/WhatsApp_Image_2025-10-30_at_10.21.26__1_-removebg-preview.png" alt="LOGO" class="logo-empresa">
-    <div>
-        <h2 style="margin:0; font-size: 1.1rem;">FIBRANET BRASIL – GESTÃO DE PLANTÃO</h2>
-        <small id="txtPeriodo" style="color: var(--warning)"></small>
+<div id="loginOverlay">
+    <div class="login-box">
+        <img src="https://raw.githubusercontent.com/cardozooscar/imagenscgr/refs/heads/main/WhatsApp_Image_2025-10-30_at_10.21.26__1_-removebg-preview.png">
+        <h3 style="color: var(--warning)">Acesso ao Painel</h3>
+        <input type="text" id="userLogin" placeholder="Usuário">
+        <input type="password" id="passLogin" placeholder="Senha" style="margin-top:10px">
+        <button class="btn-blue" onclick="autenticar()">ENTRAR</button>
     </div>
 </div>
 
-<div class="container">
+<div class="header">
+    <img src="https://raw.githubusercontent.com/cardozooscar/imagenscgr/refs/heads/main/WhatsApp_Image_2025-10-30_at_10.21.26__1_-removebg-preview.png" alt="LOGO" class="logo-empresa">
+    <div>
+        <h2 style="margin:0; font-size: 1.1rem;">FIBRANET OPS – GESTÃO DE PLANTÃO</h2>
+        <small id="txtPeriodo" style="color: var(--warning)"></small>
+    </div>
+    <button class="btn-logout" onclick="logout()">SAIR</button>
+</div>
+
+<div class="container" id="appContainer">
     <div class="dash-horas">
-        <div class="card-hora">
-            <small>Plantonista</small>
-            <h3 id="dashNome" style="color: var(--blue)">---</h3>
-        </div>
-        <div class="card-hora">
-            <small>Sobreaviso (Disponível)</small>
-            <h3 id="dashTotal">0h 0m</h3>
-        </div>
-        <div class="card-hora">
-            <small>Trabalho (Em Chamado)</small>
-            <h3 id="dashTrabalho" style="color: var(--success)">0h 0m</h3>
-        </div>
+        <div class="card-hora"><small>Plantonista</small><h3 id="dashNome" style="color: var(--blue)">---</h3></div>
+        <div class="card-hora"><small>Sobreaviso (Mês)</small><h3 id="dashTotal">0h 0m</h3></div>
+        <div class="card-hora"><small>Trabalho Efetivo</small><h3 id="dashTrabalho" style="color: var(--success)">0h 0m</h3></div>
     </div>
 
     <div class="main-grid">
         <div class="left-col">
-            <div class="panel">
-                <h4 style="margin:0; color: var(--warning);">🗓️ ESCALA E EQUIPES</h4>
-                <label>Plantonista</label>
-                <select id="escTecnico">
-                    <option>Jabson</option>
-                    <option>Alef</option>
-                    <option>Gabriel</option>
-                </select>
-                <label>Equipes de Rua</label>
-                <input type="text" id="escEquipes" placeholder="Nomes da equipe de apoio">
-                <div class="escala-grid">
-                    <div class="escala-item">
+            <div class="panel" id="panelEscalaTecnico">
+                <div class="section-title">📅 DEFINIR MINHA ESCALA</div>
+                
+                <label>Equipe de Rua (Apoio)</label>
+                <input type="text" id="escEquipes" placeholder="Ex: Técnico Alef / Solo">
+                
+                <div class="group-dates">
+                    <div class="date-item">
                         <label>Início</label>
                         <input type="datetime-local" id="escInicio">
                     </div>
-                    <div class="escala-item">
+                    <div class="date-item">
                         <label>Fim</label>
                         <input type="datetime-local" id="escFim">
                     </div>
                 </div>
-                <button class="btn-orange" onclick="salvarEscala()">Vincular Semana</button>
-                <div id="listaEscalas"></div>
+                
+                <button class="btn-orange" onclick="salvarEscala()">VINCULAR MINHA SEMANA</button>
             </div>
 
             <div class="panel">
-                <h4 style="margin:0; color: var(--blue);">🚨 NOVO CHAMADO 🚨</h4>
+                <div class="section-title">🚨 NOVO CHAMADO</div>
                 <label>Mês de Referência</label>
                 <select id="selPeriodo" onchange="carregarDados()"></select>
-                <label>Técnico</label>
+                <label>Plantonista Executante</label>
                 <select id="selTecnico">
                     <option>Jabson</option>
                     <option>Alef</option>
                     <option>Gabriel</option>
                 </select>
                 <label>Assunto / Ticket</label>
-                <input id="inpAssunto" placeholder="Ex: Manutenção POP Centro">
+                <input id="inpAssunto" placeholder="Descreva o problema">
                 <button class="btn-blue" onclick="abrirChamado()">🟢 ABRIR CHAMADO AGORA</button>
             </div>
         </div>
 
         <div class="right-col">
-            <div class="tabs">
-                <button class="tab active" onclick="setTab('Jabson', this)">Jabson</button>
-                <button class="tab" onclick="setTab('Alef', this)">Alef</button>
-                <button class="tab" onclick="setTab('Gabriel', this)">Gabriel</button>
+            <div class="tabs" id="tabsTecnicos">
+                <button class="tab" id="tabJabson" onclick="setTab('Jabson', this)">Jabson</button>
+                <button class="tab" id="tabAlef" onclick="setTab('Alef', this)">Alef</button>
+                <button class="tab" id="tabGabriel" onclick="setTab('Gabriel', this)">Gabriel</button>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+
+            <div class="section-title" style="color:var(--muted)">📋 ESCALAS VINCULADAS</div>
+            <div id="listaEscalas"></div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top:20px">
                 <div><h5 style="margin-top:0; color:var(--blue)">⚡ EM ANDAMENTO</h5><div id="listaAbertos"></div></div>
-                <div><h5 style="margin-top:0; color:var(--success)">✅ FINALIZADOS NO MÊS</h5><div id="listaFinalizados"></div></div>
+                <div><h5 style="margin-top:0; color:var(--success)">✅ FINALIZADOS</h5><div id="listaFinalizados"></div></div>
             </div>
         </div>
     </div>
@@ -134,19 +169,52 @@
 <script>
 const BOT_TOKEN = "7632842251:AAHh81bUK359qpuQLcyQhlnYQs5NlAIa8t4";
 const CHAT_ID = "-5050669365";
+const CREDENCIAIS = { "admin": "admin123", "Jabson": "jab123", "Alef": "ale123", "Gabriel": "gab123" };
+let userLogado = null, abertos = [], finalizados = [], escalas = [], tecnicoTab = "";
 
-let abertos = [], finalizados = [], escalas = [], tecnicoTab = "Jabson";
+function autenticar() {
+    const user = document.getElementById("userLogin").value;
+    const pass = document.getElementById("passLogin").value;
+    if (CREDENCIAIS[user] && CREDENCIAIS[user] === pass) {
+        userLogado = user;
+        document.getElementById("loginOverlay").style.display = "none";
+        document.getElementById("appContainer").style.display = "block";
+        configurarInterface();
+        init();
+    } else { alert("Acesso Negado!"); }
+}
 
-async function enviarTelegram(mensagem) {
+function configurarInterface() {
+    const panelEscala = document.getElementById("panelEscalaTecnico");
+    const selTecnico = document.getElementById("selTecnico");
+    if (userLogado === "admin") {
+        panelEscala.style.display = "none";
+        tecnicoTab = "Jabson";
+        document.getElementById("tabJabson").classList.add("active");
+    } else {
+        panelEscala.style.display = "block";
+        document.querySelectorAll(".tab").forEach(t => {
+            if (t.innerText !== userLogado) t.style.display = "none";
+            else { t.classList.add("active"); t.style.flex = "none"; t.style.width = "100%"; }
+        });
+        tecnicoTab = userLogado;
+        selTecnico.value = userLogado;
+        selTecnico.disabled = true;
+    }
+}
+
+function logout() { location.reload(); }
+
+async function enviarTelegram(msg) {
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-    try { await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CHAT_ID, text: mensagem, parse_mode: 'HTML' }) });
-    } catch (e) { console.error(e); }
+    try { await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: CHAT_ID, text: msg, parse_mode: 'HTML' }) }); } catch (e) {}
 }
 
 function init() {
     const sel = document.getElementById("selPeriodo");
     const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
     const hoje = new Date();
+    sel.innerHTML = "";
     for(let ano = 2026; ano <= 2027; ano++) {
         for(let m = 0; m < 12; m++) {
             let dIni = new Date(ano, m - 1, 25);
@@ -159,34 +227,6 @@ function init() {
         }
     }
     carregarDados();
-}
-
-function calcularSobreaviso(tec) {
-    let minutos = 0;
-    escalas.filter(e => e.tec === tec).forEach(esc => {
-        let atual = new Date(esc.ini), fim = new Date(esc.fim);
-        while (atual < fim) {
-            let d = atual.getDay(), h = atual.getHours();
-            let ok = false;
-            if (d >= 1 && d <= 4) { if (h >= 20 || h < 8) ok = true; }
-            else if (d === 5) { if (h >= 20) ok = true; }
-            else if (d === 6) { if (h < 8 || h >= 17) ok = true; }
-            else if (d === 0) { ok = true; }
-            if (ok) minutos++;
-            atual.setMinutes(atual.getMinutes() + 1);
-        }
-    });
-    return `${Math.floor(minutos/60)}h ${minutos%60}m`;
-}
-
-function calcularTrabalhoEfetivo(tec) {
-    let minutos = 0;
-    finalizados.filter(c => c.t === tec).forEach(c => {
-        const d1 = new Date(c.rawInicio);
-        const d2 = new Date(c.rawFim);
-        minutos += Math.floor((d2 - d1) / 60000);
-    });
-    return `${Math.floor(minutos/60)}h ${minutos%60}m`;
 }
 
 function carregarDados() {
@@ -208,14 +248,15 @@ function salvar() {
 }
 
 function salvarEscala() {
-    const tec = document.getElementById("escTecnico").value;
-    const eq = document.getElementById("escEquipes").value || "Nenhuma";
+    const tec = userLogado;
+    const eq = document.getElementById("escEquipes").value || "Solo";
     const ini = document.getElementById("escInicio").value;
     const fim = document.getElementById("escFim").value;
-    if(!ini || !fim) return alert("Preencha as datas!");
+    if(!ini || !fim) return alert("Preencha as datas da sua escala!");
     escalas.push({ id: Date.now(), tec, equipes: eq, ini, fim });
     document.getElementById("escEquipes").value = "";
     salvar(); listar();
+    enviarTelegram(`📅 <b>ESCALA DEFINIDA</b>\n👤 <b>Técnico:</b> ${tec}\n👥 <b>Equipe:</b> ${eq}\n⏳ <b>Período:</b> ${new Date(ini).toLocaleString()} até ${new Date(fim).toLocaleString()}`);
 }
 
 function excluirEscala(id) {
@@ -224,95 +265,76 @@ function excluirEscala(id) {
 }
 
 function setTab(t, btn) {
+    if(userLogado !== "admin" && userLogado !== t) return;
     tecnicoTab = t;
     document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     listar();
 }
 
+function calcularHoras(tec) {
+    let minSob = 0;
+    escalas.filter(e => e.tec === tec).forEach(esc => {
+        let atual = new Date(esc.ini), fim = new Date(esc.fim);
+        while (atual < fim) {
+            let d = atual.getDay(), h = atual.getHours();
+            let ok = (d >= 1 && d <= 4 && (h >= 20 || h < 8)) || (d === 5 && h >= 20) || (d === 6 && (h < 8 || h >= 17)) || (d === 0);
+            if (ok) minSob++;
+            atual.setMinutes(atual.getMinutes() + 1);
+        }
+    });
+    let minTrab = 0;
+    finalizados.filter(c => c.t === tec).forEach(c => {
+        minTrab += Math.floor((new Date(c.rawFim) - new Date(c.rawInicio)) / 60000);
+    });
+    document.getElementById("dashTotal").innerText = `${Math.floor(minSob/60)}h ${minSob%60}m`;
+    document.getElementById("dashTrabalho").innerText = `${Math.floor(minTrab/60)}h ${minTrab%60}m`;
+}
+
 function listar() {
     const colA = document.getElementById("listaAbertos"), colF = document.getElementById("listaFinalizados"), divE = document.getElementById("listaEscalas");
     colA.innerHTML = ""; colF.innerHTML = ""; divE.innerHTML = "";
-
     document.getElementById("dashNome").innerText = tecnicoTab;
-    document.getElementById("dashTotal").innerText = calcularSobreaviso(tecnicoTab);
-    document.getElementById("dashTrabalho").innerText = calcularTrabalhoEfetivo(tecnicoTab);
-
+    calcularHoras(tecnicoTab);
     escalas.filter(e => e.tec === tecnicoTab).forEach(e => {
         divE.innerHTML += `<div class="card card-escala">
-            <div><b>${e.tec}</b><br><small>${new Date(e.ini).toLocaleString()} - ${new Date(e.fim).toLocaleString()}</small><br><small style="color:var(--warning)">Equipes: ${e.equipes}</small></div>
+            <div><b>Plantão:</b> ${new Date(e.ini).toLocaleString()} - ${new Date(e.fim).toLocaleString()}<br>
+            <span style="color:var(--warning)">👥 Equipe: ${e.equipes}</span></div>
             <button class="btn-del" onclick="excluirEscala(${e.id})">Remover</button>
         </div>`;
     });
-
     abertos.filter(c => c.t === tecnicoTab).forEach(c => {
-        colA.innerHTML += `<div class="card">
-            <b>${c.a}</b><br><small style="color:var(--muted)">Desde: ${c.dataInicio}</small>
-            <div>
-                ${c.status === 't' ? 
-                    `<button class="btn-card" onclick="acao(${c.id},'p')" style="background:var(--pending)">PAUSAR</button><button class="btn-card" onclick="acao(${c.id},'f')" style="background:var(--danger)">ENCERRAR</button>` : 
-                    `<button class="btn-card" onclick="acao(${c.id},'t')" style="background:var(--success)">RETOMAR</button>`
-                }
-            </div>
+        colA.innerHTML += `<div class="card"><b>${c.a}</b><br><small>Início: ${c.dataInicio}</small>
+            <div>${c.status==='t' ? `<button class="btn-card" onclick="acao(${c.id},'p')" style="background:var(--pending)">PAUSAR</button><button class="btn-card" onclick="acao(${c.id},'f')" style="background:var(--danger)">ENCERRAR</button>` : `<button class="btn-card" onclick="acao(${c.id},'t')" style="background:var(--success)">RETOMAR</button>`}</div>
         </div>`;
     });
-
     finalizados.filter(c => c.t === tecnicoTab).forEach(c => {
-        colF.innerHTML += `<div class="card" style="border-left-color:var(--success)"><b>${c.a}</b><p style="font-size:0.8rem; margin:5px 0; color:var(--muted)">${c.rel}</p><small style="color:var(--success)">Concluído em: ${c.dataFim}</small></div>`;
+        colF.innerHTML += `<div class="card" style="border-left-color:var(--success)"><b>${c.a}</b><p style="font-size:0.8rem;margin:5px 0">${c.rel}</p><small style="color:var(--success)">Fim: ${c.dataFim}</small></div>`;
     });
 }
 
 function abrirChamado() {
-    const t = document.getElementById("selTecnico").value;
-    const a = document.getElementById("inpAssunto").value;
+    const t = document.getElementById("selTecnico").value, a = document.getElementById("inpAssunto").value;
     if(!a) return alert("Assunto vazio!");
-    const agora = new Date();
-    const dataFormatada = agora.toLocaleString('pt-BR');
-    
-    abertos.push({ id: Date.now(), t, a, status: 't', rawInicio: agora.toISOString(), dataInicio: dataFormatada });
+    const agora = new Date(), dataF = agora.toLocaleString('pt-BR');
+    abertos.push({ id: Date.now(), t, a, status: 't', rawInicio: agora.toISOString(), dataInicio: dataF });
     salvar(); listar();
-    
-    const msg = `🚨 <b>NOVO CHAMADO ABERTO</b> 🚨\n\n` +
-                `👤 <b>Plantonista:</b> ${t}\n` +
-                `🗒 <b>Assunto:</b> ${a}\n` +
-                `📌 <b>Status:</b> Em atendimento (Novo)\n` +
-                `⏱ <b>Início:</b> ${dataFormatada}`;
-    
-    enviarTelegram(msg);
+    enviarTelegram(`🚨 <b>NOVO CHAMADO ABERTO</b> 🚨\n\n👤 <b>Plantonista:</b> ${t}\n🗒 <b>Assunto:</b> ${a}\n📌 <b>Status:</b> Em atendimento (Novo)\n⏱ <b>Início:</b> ${dataF}`);
     document.getElementById("inpAssunto").value = "";
 }
 
 function acao(id, tipo) {
-    const idx = abertos.findIndex(c => c.id === id);
-    const c = abertos[idx];
-    const agora = new Date();
-    const agoraFormatado = agora.toLocaleString('pt-BR');
-
-    if (tipo === 'p') {
-        c.status = 'p';
-        enviarTelegram(`⏸️ <b>CHAMADO PAUSADO</b> ⏸️\n\n👤 <b>Plantonista:</b> ${c.t}\n🗒 <b>Assunto:</b> ${c.a}\n📌 <b>Status:</b> Pausado`);
-    } else if (tipo === 't') {
-        c.status = 't';
-        enviarTelegram(`▶️ <b>CHAMADO RETOMADO</b> ▶️\n\n👤 <b>Plantonista:</b> ${c.t}\n🗒 <b>Assunto:</b> ${c.a}\n📌 <b>Status:</b> Em atendimento`);
-    } else if (tipo === 'f') {
-        const rel = prompt("Relatório de encerramento:");
-        if(!rel) return;
-        finalizados.push({...c, rel, rawFim: agora.toISOString(), dataFim: agoraFormatado});
+    const idx = abertos.findIndex(c => c.id === id), c = abertos[idx], agora = new Date(), agoraF = agora.toLocaleString('pt-BR');
+    if (tipo === 'p') { c.status = 'p'; enviarTelegram(`⏸️ <b>CHAMADO PAUSADO</b>\n👤 <b>Plantonista:</b> ${c.t}\n🗒 <b>Assunto:</b> ${c.a}`); }
+    else if (tipo === 't') { c.status = 't'; enviarTelegram(`▶️ <b>CHAMADO RETOMADO</b>\n👤 <b>Plantonista:</b> ${c.t}\n🗒 <b>Assunto:</b> ${c.a}`); }
+    else if (tipo === 'f') {
+        const rel = prompt("Relatório de encerramento:"); if(!rel) return;
+        finalizados.push({...c, rel, rawFim: agora.toISOString(), dataFim: agoraF});
         abertos.splice(idx, 1);
-        
-        const msg = `✅ <b>CHAMADO ENCERRADO</b> ✅\n\n` +
-                    `👤 <b>Plantonista:</b> ${c.t}\n` +
-                    `🗒 <b>Assunto:</b> ${c.a}\n` +
-                    `📌 <b>Status:</b> Finalizado\n` +
-                    `⏱ <b>Início:</b> ${c.dataInicio}\n` +
-                    `⏰ <b>Fim:</b> ${agoraFormatado}\n` +
-                    `<b>Relato:</b> ${rel}`;
-        enviarTelegram(msg);
+        enviarTelegram(`✅ <b>CHAMADO ENCERRADO</b> ✅\n\n👤 <b>Plantonista:</b> ${c.t}\n🗒 <b>Assunto:</b> ${c.a}\n📌 <b>Status:</b> Finalizado\n⏱ <b>Início:</b> ${c.dataInicio}\n⏰ <b>Fim:</b> ${agoraF}\n<b>Relato:</b> ${rel}`);
     }
     salvar(); listar();
 }
-
-init();
 </script>
 </body>
 </html>
