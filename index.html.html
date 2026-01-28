@@ -48,7 +48,6 @@
             outline: none;
         }
 
-        /* CORREÇÃO DO ENQUADRAMENTO DAS DATAS */
         .group-dates { 
             display: flex; 
             gap: 12px; 
@@ -56,10 +55,9 @@
         }
         .date-item { 
             flex: 1; 
-            min-width: 0; /* Previne que o input force a quebra do flex */
+            min-width: 0; 
         }
         
-        /* Ajuste para telas pequenas (Mobile) */
         @media (max-width: 400px) {
             .group-dates { flex-direction: column; gap: 0; }
         }
@@ -80,9 +78,13 @@
         .btn-card { padding: 8px 12px; font-size: 0.8rem; margin-right: 5px; margin-top: 10px; }
 
         .section-title { border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; color: var(--warning); font-size: 0.95rem; font-weight: bold; display: flex; align-items: center; gap: 8px;}
+        
+        #loadingOverlay { position: fixed; inset:0; background: rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:2000; color:white; }
     </style>
 </head>
 <body>
+
+<div id="loadingOverlay">⏳ Sincronizando...</div>
 
 <div id="loginOverlay">
     <div class="login-box">
@@ -114,10 +116,8 @@
         <div class="left-col">
             <div class="panel" id="panelEscalaTecnico">
                 <div class="section-title">📅 DEFINIR MINHA ESCALA</div>
-                
                 <label>Equipe de Rua (Apoio)</label>
                 <input type="text" id="escEquipes" placeholder="Ex: Técnico Alef / Solo">
-                
                 <div class="group-dates">
                     <div class="date-item">
                         <label>Início</label>
@@ -128,7 +128,6 @@
                         <input type="datetime-local" id="escFim">
                     </div>
                 </div>
-                
                 <button class="btn-orange" onclick="salvarEscala()">VINCULAR MINHA SEMANA</button>
             </div>
 
@@ -167,10 +166,16 @@
 </div>
 
 <script>
+// --- CONFIGURAÇÃO DA PLANILHA ---
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwf-SjWoMd6TEgptintcczusrHEjg3kfHT6HA_F2AsPcVNTw9AmWcuq8XM-fNtNOyu6/exec"; // <--- COLE AQUI SEU LINK /EXEC
+// --------------------------------
+
 const BOT_TOKEN = "7632842251:AAHh81bUK359qpuQLcyQhlnYQs5NlAIa8t4";
 const CHAT_ID = "-5050669365";
 const CREDENCIAIS = { "admin": "admin123", "Jabson": "jab123", "Alef": "ale123", "Gabriel": "gab123" };
 let userLogado = null, abertos = [], finalizados = [], escalas = [], tecnicoTab = "";
+
+function showLoading(v) { document.getElementById("loadingOverlay").style.display = v ? "flex" : "none"; }
 
 function autenticar() {
     const user = document.getElementById("userLogin").value;
@@ -229,39 +234,48 @@ function init() {
     carregarDados();
 }
 
-function carregarDados() {
-    const pVal = document.getElementById("selPeriodo").value;
-    if(!pVal) return;
-    const p = JSON.parse(pVal);
-    document.getElementById("txtPeriodo").innerText = `Mês Ref: 25/${new Date(p.ini).getMonth()+1} a 26/${new Date(p.fim).getMonth()+1}`;
-    abertos = JSON.parse(localStorage.getItem("ab_"+p.key)) || [];
-    finalizados = JSON.parse(localStorage.getItem("fi_"+p.key)) || [];
-    escalas = JSON.parse(localStorage.getItem("es_"+p.key)) || [];
-    listar();
+async function carregarDados() {
+    showLoading(true);
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        
+        // Mapeia os dados da planilha para o formato do sistema
+        abertos = data.abertos.map(r => ({ id: r[0], t: r[1], a: r[2], status: r[3], rawInicio: r[4], dataInicio: r[5] }));
+        finalizados = data.finalizados.map(r => ({ id: r[0], t: r[1], a: r[2], status: r[3], rawInicio: r[4], dataInicio: r[5], rel: r[6], rawFim: r[7], dataFim: r[8] }));
+        escalas = data.escalas.map(r => ({ id: r[0], tec: r[1], equipes: r[2], ini: r[3], fim: r[4] }));
+        
+        listar();
+    } catch (e) { console.error("Erro ao carregar:", e); }
+    showLoading(false);
 }
 
-function salvar() {
-    const p = JSON.parse(document.getElementById("selPeriodo").value);
-    localStorage.setItem("ab_"+p.key, JSON.stringify(abertos));
-    localStorage.setItem("fi_"+p.key, JSON.stringify(finalizados));
-    localStorage.setItem("es_"+p.key, JSON.stringify(escalas));
+async function api(payload) {
+    showLoading(true);
+    try {
+        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        await carregarDados();
+    } catch (e) { alert("Erro de conexão!"); }
+    showLoading(false);
 }
 
-function salvarEscala() {
+async function salvarEscala() {
     const tec = userLogado;
     const eq = document.getElementById("escEquipes").value || "Solo";
     const ini = document.getElementById("escInicio").value;
     const fim = document.getElementById("escFim").value;
     if(!ini || !fim) return alert("Preencha as datas da sua escala!");
-    escalas.push({ id: Date.now(), tec, equipes: eq, ini, fim });
-    document.getElementById("escEquipes").value = "";
-    salvar(); listar();
+    
+    const row = [Date.now(), tec, eq, ini, fim];
+    await api({ aba: 'Escalas', action: 'add', row });
+    
     enviarTelegram(`📅 <b>ESCALA DEFINIDA</b>\n👤 <b>Técnico:</b> ${tec}\n👥 <b>Equipe:</b> ${eq}\n⏳ <b>Período:</b> ${new Date(ini).toLocaleString()} até ${new Date(fim).toLocaleString()}`);
+    document.getElementById("escEquipes").value = "";
 }
 
-function excluirEscala(id) {
-    escalas = escalas.filter(e => e.id !== id);
-    salvar(); listar();
+async function excluirEscala(id) {
+    if(!confirm("Remover esta escala?")) return;
+    await api({ aba: 'Escalas', action: 'delete', id });
 }
 
 function setTab(t, btn) {
@@ -296,6 +310,7 @@ function listar() {
     colA.innerHTML = ""; colF.innerHTML = ""; divE.innerHTML = "";
     document.getElementById("dashNome").innerText = tecnicoTab;
     calcularHoras(tecnicoTab);
+    
     escalas.filter(e => e.tec === tecnicoTab).forEach(e => {
         divE.innerHTML += `<div class="card card-escala">
             <div><b>Plantão:</b> ${new Date(e.ini).toLocaleString()} - ${new Date(e.fim).toLocaleString()}<br>
@@ -313,27 +328,33 @@ function listar() {
     });
 }
 
-function abrirChamado() {
+async function abrirChamado() {
     const t = document.getElementById("selTecnico").value, a = document.getElementById("inpAssunto").value;
     if(!a) return alert("Assunto vazio!");
     const agora = new Date(), dataF = agora.toLocaleString('pt-BR');
-    abertos.push({ id: Date.now(), t, a, status: 't', rawInicio: agora.toISOString(), dataInicio: dataF });
-    salvar(); listar();
+    
+    const row = [Date.now(), t, a, 't', agora.toISOString(), dataF];
+    await api({ aba: 'Abertos', action: 'add', row });
+    
     enviarTelegram(`🚨 <b>NOVO CHAMADO ABERTO</b> 🚨\n\n👤 <b>Plantonista:</b> ${t}\n🗒 <b>Assunto:</b> ${a}\n📌 <b>Status:</b> Em atendimento (Novo)\n⏱ <b>Início:</b> ${dataF}`);
     document.getElementById("inpAssunto").value = "";
 }
 
-function acao(id, tipo) {
-    const idx = abertos.findIndex(c => c.id === id), c = abertos[idx], agora = new Date(), agoraF = agora.toLocaleString('pt-BR');
-    if (tipo === 'p') { c.status = 'p'; enviarTelegram(`⏸️ <b>CHAMADO PAUSADO</b>\n👤 <b>Plantonista:</b> ${c.t}\n🗒 <b>Assunto:</b> ${c.a}`); }
-    else if (tipo === 't') { c.status = 't'; enviarTelegram(`▶️ <b>CHAMADO RETOMADO</b>\n👤 <b>Plantonista:</b> ${c.t}\n🗒 <b>Assunto:</b> ${c.a}`); }
+async function acao(id, tipo) {
+    const idx = abertos.findIndex(c => c.id == id), c = abertos[idx], agora = new Date(), agoraF = agora.toLocaleString('pt-BR');
+    
+    if (tipo === 'p') { 
+        // Lógica de pausa local para este sistema específico
+        alert("Chamado Pausado (Apenas visual)");
+        enviarTelegram(`⏸️ <b>CHAMADO PAUSADO</b>\n👤 <b>Plantonista:</b> ${c.t}\n🗒 <b>Assunto:</b> ${c.a}`); 
+    } 
     else if (tipo === 'f') {
         const rel = prompt("Relatório de encerramento:"); if(!rel) return;
-        finalizados.push({...c, rel, rawFim: agora.toISOString(), dataFim: agoraF});
-        abertos.splice(idx, 1);
+        const row = [c.id, c.t, c.a, 'f', c.rawInicio, c.dataInicio, rel, agora.toISOString(), agoraF];
+        await api({ action: 'move', id: c.id, row });
+        
         enviarTelegram(`✅ <b>CHAMADO ENCERRADO</b> ✅\n\n👤 <b>Plantonista:</b> ${c.t}\n🗒 <b>Assunto:</b> ${c.a}\n📌 <b>Status:</b> Finalizado\n⏱ <b>Início:</b> ${c.dataInicio}\n⏰ <b>Fim:</b> ${agoraF}\n<b>Relato:</b> ${rel}`);
     }
-    salvar(); listar();
 }
 </script>
 </body>
